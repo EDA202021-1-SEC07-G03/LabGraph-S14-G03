@@ -31,7 +31,20 @@ import threading
 from App import controller
 from DISClib.ADT import stack
 assert config
-
+import datetime
+import time
+import tracemalloc
+def getTime():
+    return float(time.perf_counter()*1000)
+def getMemory():
+    return tracemalloc.take_snapshot()
+def deltaMemory(start_memory, stop_memory):
+    memory_diff = stop_memory.compare_to(start_memory, "filename")
+    delta_memory = 0.0
+    for stat in memory_diff:
+        delta_memory = delta_memory + stat.size_diff
+    delta_memory = delta_memory/1024.0
+    return delta_memory
 """
 La vista se encarga de la interacción con el usuario.
 Presenta el menu de opciones  y  por cada seleccion
@@ -44,7 +57,7 @@ operación seleccionada.
 # ___________________________________________________
 
 
-servicefile = 'bus_routes_14000.csv'
+servicefile = 'bus_routes_2000.csv'
 initialStation = None
 
 # ___________________________________________________
@@ -117,26 +130,55 @@ Menu principal
 
 
 def thread_cycle():
+    inputs = [1,2,4]
     while True:
         printMenu()
-        inputs = input('Seleccione una opción para continuar\n>')
+        #inputs =input('Seleccione una opción para continuar\n>')
 
         if int(inputs[0]) == 1:
             print("\nInicializando....")
             # cont es el controlador que se usará de acá en adelante
             cont = controller.init()
-
+            inputs.remove(inputs[0])
         elif int(inputs[0]) == 2:
+            #------------------------------------------------
+            tracemalloc.start()
+            start_time = getTime()
+            start_memory = getMemory()
+            #***************************************
             optionTwo(cont)
-
+            #**************************************
+            stop_memory = getMemory()
+            stop_time = getTime()
+            tracemalloc.stop()
+            delta_time = round(stop_time - start_time,2)
+            delta_memory = round(deltaMemory(start_memory, stop_memory),2)
+            print("Tiempo [ms]:",delta_time)
+            print("Memoria [kB]:",delta_memory,)
+            print('-'*80)
+            inputs.remove(inputs[0])
         elif int(inputs[0]) == 3:
             optionThree(cont)
 
         elif int(inputs[0]) == 4:
-            msg = "Estación Base: BusStopCode-ServiceNo (Ej: 75009-10): "
+            msg = 75009-10 #"Estación Base: BusStopCode-ServiceNo (Ej: 75009-10): "
             initialStation = input(msg)
+            #------------------------------------------------
+            tracemalloc.start()
+            start_time = getTime()
+            start_memory = getMemory()
+            #***************************************
             optionFour(cont, initialStation)
-
+            #**************************************
+            stop_memory = getMemory()
+            stop_time = getTime()
+            tracemalloc.stop()
+            delta_time = round(stop_time - start_time,2)
+            delta_memory = round(deltaMemory(start_memory, stop_memory),2)
+            print("Tiempo [ms]:",delta_time)
+            print("Memoria [kB]:",delta_memory,)
+            print('-'*80)
+            inputs.remove(inputs[0])
         elif int(inputs[0]) == 5:
             destStation = input("Estación destino (Ej: 15151-10): ")
             optionFive(cont, destStation)
